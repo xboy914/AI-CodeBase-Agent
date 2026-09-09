@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ai-codebase-agent"
-version = "0.6.0"
+version = "1.0.0"
 description = "A retrieval-augmented AI agent for understanding React and TypeScript codebases"
 readme = "README.md"
 requires-python = ">=3.11"

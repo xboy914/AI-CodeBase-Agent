@@ -8,7 +8,7 @@ from .service import CodebaseAgent
 settings = get_settings()
 app = FastAPI(
     title="AI Codebase Agent",
-    version="0.6.0",
+    version="1.0.0",
     description="Retrieval-augmented analysis for React and TypeScript repositories.",
 )
 app.add_middleware(
@@ -33,6 +33,14 @@ def health() -> dict[str, str]:
 def index_codebase(request: IndexRequest) -> IndexResult:
     try:
         return get_agent().index(request.path)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/map")
+def map_codebase(request: IndexRequest) -> dict:
+    try:
+        return get_agent().repository_map(request.path)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
