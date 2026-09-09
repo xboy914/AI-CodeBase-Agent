@@ -1,23 +1,32 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .models import AskRequest, AskResult, IndexRequest, IndexResult
 from .service import CodebaseAgent
 
+settings = get_settings()
 app = FastAPI(
     title="AI Codebase Agent",
-    version="0.1.0",
+    version="0.2.0",
     description="Retrieval-augmented analysis for React and TypeScript repositories.",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 
 def get_agent() -> CodebaseAgent:
-    return CodebaseAgent(get_settings())
+    return CodebaseAgent(settings)
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "version": app.version}
 
 
 @app.post("/index", response_model=IndexResult)
