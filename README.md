@@ -17,7 +17,7 @@ A full-stack retrieval-augmented assistant that indexes React and TypeScript rep
 - Vector replacement for modified files and cleanup for deleted files
 - Hybrid semantic and lexical retrieval with Reciprocal Rank Fusion
 - Exact matching for file paths, symbols, declaration kinds, and code tokens
-- Pluggable OpenAI-compatible providers for hosted OpenAI, local Ollama, and custom endpoints\n- Grounded answers with explicit citations and uncertainty rules
+- Pluggable OpenAI-compatible providers for hosted OpenAI, local Ollama, and custom endpoints\n- Repository maps with imports, packages, dependency cycles, and hotspots\n- Grounded answers with explicit citations and uncertainty rules
 - FastAPI, CLI, and a responsive Next.js workspace
 - Independent backend and web quality gates in GitHub Actions
 
@@ -64,7 +64,7 @@ Open `http://localhost:3000` to index a permitted repository, ask a codebase que
 
 ```bash
 codebase-agent index .
-codebase-agent ask "Where is authentication state managed?"
+codebase-agent map .\ncodebase-agent ask "Where is authentication state managed?"
 ```
 
 The index command reports total files, embedded chunks, indexed files, unchanged files, and deleted files.
@@ -75,7 +75,7 @@ The index command reports total files, embedded chunks, indexed files, unchanged
 | --- | --- | --- |
 | GET | `/health` | API status and version |
 | POST | `/index` | Incrementally parse, embed, replace, and clean repository vectors |
-| POST | `/ask` | Hybrid retrieval and grounded answer with citations |
+| POST | `/map` | Build dependency graph, cycle report, and hotspot list |\n| POST | `/ask` | Hybrid retrieval and grounded answer with citations |
 
 Interactive API documentation is available at `http://localhost:8000/docs`.
 

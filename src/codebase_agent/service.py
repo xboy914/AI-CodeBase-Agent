@@ -5,6 +5,7 @@ from .chunker import chunk_file, iter_source_files
 from .config import Settings
 from .models import AskResult, Citation, IndexResult
 from .providers import AIProvider, build_provider
+from .repository_map import analyze_repository
 from .store import CodeStore
 
 SYSTEM_PROMPT = """You are a senior React and TypeScript codebase analyst.
@@ -47,6 +48,9 @@ class CodebaseAgent:
             unchanged_files=result.unchanged_files,
             deleted_files=result.deleted_files,
         )
+
+    def repository_map(self, relative_path: str = ".") -> dict:
+        return analyze_repository(self._resolve_path(relative_path))
 
     def ask(self, question: str, limit: int = 8) -> AskResult:
         context = self.store.search(question, limit)
