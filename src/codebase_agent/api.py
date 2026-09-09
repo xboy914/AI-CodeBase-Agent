@@ -8,7 +8,7 @@ from .service import CodebaseAgent
 settings = get_settings()
 app = FastAPI(
     title="AI Codebase Agent",
-    version="0.3.0",
+    version="0.4.0",
     description="Retrieval-augmented analysis for React and TypeScript repositories.",
 )
 app.add_middleware(

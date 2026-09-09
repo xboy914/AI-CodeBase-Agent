@@ -7,7 +7,7 @@ A full-stack retrieval-augmented assistant that indexes React and TypeScript rep
 ![Next.js](https://img.shields.io/badge/Next.js-Web-000000?logo=nextdotjs&logoColor=white)
 ![Tree-sitter](https://img.shields.io/badge/Tree--sitter-AST-6A4C93)
 ![OpenAI](https://img.shields.io/badge/OpenAI-Embeddings%20%2B%20Responses-412991?logo=openai&logoColor=white)
-![Qdrant](https://img.shields.io/badge/Qdrant-Incremental%20Vector%20Index-DC244C)
+![Qdrant](https://img.shields.io/badge/Qdrant-Hybrid%20Retrieval-DC244C)
 ![CI](https://github.com/xboy914/AI-CodeBase-Agent/actions/workflows/ci.yml/badge.svg)
 
 ## What it demonstrates
@@ -15,25 +15,23 @@ A full-stack retrieval-augmented assistant that indexes React and TypeScript rep
 - AST-aware TypeScript, TSX, JavaScript, and JSX chunking with Tree-sitter
 - Content-hash incremental indexing that skips unchanged files
 - Vector replacement for modified files and cleanup for deleted files
-- Named symbol metadata for functions, classes, interfaces, types, enums, and components
-- OpenAI embeddings with Qdrant semantic retrieval
+- Hybrid semantic and lexical retrieval with Reciprocal Rank Fusion
+- Exact matching for file paths, symbols, declaration kinds, and code tokens
 - Grounded answers with explicit citations and uncertainty rules
 - FastAPI, CLI, and a responsive Next.js workspace
 - Independent backend and web quality gates in GitHub Actions
 
-## Incremental retrieval pipeline
+## Retrieval pipeline
 
 ```text
-Repository scan -> SHA-256 file hashes -> compare with Qdrant payloads
-                                         |
-                         changed --------+------ unchanged (skip)
-                            |
-                 AST chunks -> embeddings -> upsert
-                            |
-                 deleted paths -> vector cleanup
+Repository -> AST chunks -> incremental embeddings -> Qdrant
+Question ----+-> semantic candidates -----------+
+             +-> lexical path/symbol/code scan --+-> RRF -> grounded answer
 ```
 
-Each stored chunk carries its source path, file hash, symbol, declaration kind, and line range. Re-indexing an unchanged repository creates no new embeddings. Changed files are deleted and replaced atomically by path; removed source files are also removed from retrieval.
+Each stored chunk carries its source path, file hash, symbol, declaration kind, and line range. Re-indexing skips unchanged files, replaces modified vectors, and removes deleted sources. At query time, Reciprocal Rank Fusion combines semantic ranking with deterministic lexical ranking, so conceptual questions and exact identifiers both retrieve useful context.
+
+The lexical pass scans stored payloads and is intentionally simple for a portfolio-sized repository. A production deployment can replace it with a Qdrant sparse index without changing the fusion boundary.
 
 ## Quick start
 
@@ -77,7 +75,7 @@ The index command reports total files, embedded chunks, indexed files, unchanged
 | --- | --- | --- |
 | GET | `/health` | API status and version |
 | POST | `/index` | Incrementally parse, embed, replace, and clean repository vectors |
-| POST | `/ask` | Retrieve relevant code and answer with citations |
+| POST | `/ask` | Hybrid retrieval and grounded answer with citations |
 
 Interactive API documentation is available at `http://localhost:8000/docs`.
 
@@ -91,7 +89,7 @@ Interactive API documentation is available at `http://localhost:8000/docs`.
 ## Roadmap
 
 - Batch-limited embeddings for very large repositories
-- Hybrid lexical and vector retrieval
+- Native sparse-vector lexical retrieval for large collections
 - Repository map and dependency graph
 - Pluggable local and hosted model providers
 - Streaming answers and saved analysis sessions
