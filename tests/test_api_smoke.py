@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
-from codebase_agent.api import app, get_agent
+import codebase_agent.api as api_module
+from codebase_agent.api import app
 from codebase_agent.models import AskResult, Citation, IndexResult
 
 
@@ -25,13 +26,9 @@ class FakeAgent:
         )
 
 
-def client() -> TestClient:
-    app.dependency_overrides[get_agent] = FakeAgent
-    return TestClient(app)
-
-
-def test_health_and_core_workflow_contracts():
-    api = client()
+def test_health_and_core_workflow_contracts(monkeypatch):
+    monkeypatch.setattr(api_module, "get_agent", lambda: FakeAgent())
+    api = TestClient(app)
     assert api.get("/health").json() == {"status": "ok", "version": "1.0.0"}
     assert api.post("/index", json={"path": "."}).status_code == 200
     assert api.post("/map", json={"path": "."}).json()["internal_dependencies"] == 1
