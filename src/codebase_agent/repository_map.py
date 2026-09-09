@@ -1,3 +1,4 @@
+import posixpath
 import re
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,7 @@ def extract_imports(source: str) -> set[str]:
 
 
 def _resolve(source: str, specifier: str, known: set[str]) -> str | None:
-    base = (Path(source).parent / specifier).as_posix()
+    base = posixpath.normpath((Path(source).parent / specifier).as_posix())
     candidates = [base, *(base + suffix for suffix in SUFFIXES)]
     candidates += [f"{base}/index{suffix}" for suffix in SUFFIXES]
     return next((item for item in candidates if item in known), None)
