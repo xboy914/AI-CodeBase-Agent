@@ -77,7 +77,10 @@ def analyze_repository(root: Path) -> dict[str, Any]:
         for path in sorted(known)
     ]
     hotspots = [
-        path\n        for path, count in sorted(\n            incoming.items(), key=lambda item: (-item[1], item[0])\n        )
+        path
+        for path, count in sorted(
+            incoming.items(), key=lambda item: (-item[1], item[0])
+        )
         if count > 0
     ][:10]
     return {
