@@ -5,6 +5,7 @@ from .chunker import chunk_file, iter_source_files
 from .config import Settings
 from .models import AskResult, Citation, IndexResult
 from .providers import AIProvider, build_provider
+from .repository_map import analyze_repository
 from .store import CodeStore
 
 SYSTEM_PROMPT = """You are a senior React and TypeScript codebase analyst.
@@ -57,19 +58,12 @@ class CodebaseAgent:
             return AskResult(answer="No indexed context was found.", citations=[])
 
         blocks = [
-            f"[{item['path']}:{item['start_line']}-{item['end_line']}]
-{item['content']}"
+            f"[{item['path']}:{item['start_line']}-{item['end_line']}]\n{item['content']}"
             for item in context
         ]
         answer = self.provider.answer(
             SYSTEM_PROMPT,
-            f"Question:
-{question}
-
-Repository context:
-" + "
-
-".join(blocks),
+            f"Question:\n{question}\n\nRepository context:\n" + "\n\n".join(blocks),
         )
         citations = [
             Citation(
