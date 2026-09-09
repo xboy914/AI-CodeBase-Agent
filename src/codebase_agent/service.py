@@ -48,18 +48,28 @@ class CodebaseAgent:
             deleted_files=result.deleted_files,
         )
 
-    def repository_map(self, relative_path: str = ".") -> dict:\n        return analyze_repository(self._resolve_path(relative_path))\n\n    def ask(self, question: str, limit: int = 8) -> AskResult:
+    def repository_map(self, relative_path: str = ".") -> dict:
+        return analyze_repository(self._resolve_path(relative_path))
+
+    def ask(self, question: str, limit: int = 8) -> AskResult:
         context = self.store.search(question, limit)
         if not context:
             return AskResult(answer="No indexed context was found.", citations=[])
 
         blocks = [
-            f"[{item['path']}:{item['start_line']}-{item['end_line']}]\n{item['content']}"
+            f"[{item['path']}:{item['start_line']}-{item['end_line']}]
+{item['content']}"
             for item in context
         ]
         answer = self.provider.answer(
             SYSTEM_PROMPT,
-            f"Question:\n{question}\n\nRepository context:\n" + "\n\n".join(blocks),
+            f"Question:
+{question}
+
+Repository context:
+" + "
+
+".join(blocks),
         )
         citations = [
             Citation(
