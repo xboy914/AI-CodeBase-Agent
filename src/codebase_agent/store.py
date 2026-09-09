@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 from hashlib import sha256
-from typing import Iterable
 from uuid import UUID
 
 from openai import OpenAI
