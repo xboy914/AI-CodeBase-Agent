@@ -5,30 +5,30 @@ A full-stack retrieval-augmented assistant that indexes React and TypeScript rep
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-Web-000000?logo=nextdotjs&logoColor=white)
+![Tree-sitter](https://img.shields.io/badge/Tree--sitter-AST-6A4C93)
 ![OpenAI](https://img.shields.io/badge/OpenAI-Embeddings%20%2B%20Responses-412991?logo=openai&logoColor=white)
 ![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20Search-DC244C)
 ![CI](https://github.com/xboy914/AI-CodeBase-Agent/actions/workflows/ci.yml/badge.svg)
 
 ## What it demonstrates
 
-- Repository ingestion with safe root-path enforcement
-- Source filtering and overlapping chunks with file/line metadata
+- AST-aware TypeScript, TSX, JavaScript, and JSX chunking with Tree-sitter
+- Named symbol metadata for functions, classes, interfaces, types, enums, and components
+- Source filtering and safe root-path enforcement
 - OpenAI embeddings and Qdrant cosine-similarity retrieval
 - Grounded answers through the OpenAI Responses API
 - Explicit citations and uncertainty rules
 - FastAPI, CLI, and a responsive Next.js workspace
 - Independent backend and web quality gates in GitHub Actions
 
-## Architecture
+## Retrieval pipeline
 
 ```text
-React / Next.js ───────┐
-CLI ───────────────────┼─> FastAPI ─> scanner ─> chunks ─> embeddings ─> Qdrant
-                       │                                      ↑             │
-Question ──────────────┘                                      └─ retrieval ─┘
-                                                                      │
-                                                          answer + citations
+Repository -> language parser -> syntax tree -> symbol chunks -> embeddings -> Qdrant
+Question -------------------------------------------------> retrieval ------> grounded answer
 ```
+
+Structured source files are grouped around meaningful declarations. Imports are retained as module context, oversized symbols are split with overlap, and unsupported text formats use line-window fallback chunking.
 
 ## Quick start
 
@@ -55,7 +55,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. The interface checks API health, indexes an allowed relative path, submits codebase questions, and renders retrieved citations.
+Open `http://localhost:3000` to index a permitted repository, ask a codebase question, and inspect the retrieved citations.
 
 ### CLI
 
@@ -64,15 +64,15 @@ codebase-agent index .
 codebase-agent ask "Where is authentication state managed?"
 ```
 
-Interactive API documentation is available at `http://localhost:8000/docs`.
-
 ## API
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | GET | `/health` | API status and version |
-| POST | `/index` | Scan, chunk, embed, and store an allowed repository |
+| POST | `/index` | Parse, chunk, embed, and store an allowed repository |
 | POST | `/ask` | Retrieve relevant code and answer with citations |
+
+Interactive API documentation is available at `http://localhost:8000/docs`.
 
 ## Safety and boundaries
 
@@ -83,8 +83,7 @@ Interactive API documentation is available at `http://localhost:8000/docs`.
 
 ## Roadmap
 
-- AST-aware chunking with Tree-sitter
-- Incremental indexing based on Git diffs
+- Incremental indexing based on content hashes and Git diffs
 - Hybrid lexical and vector retrieval
 - Repository map and dependency graph
 - Pluggable model and embedding providers

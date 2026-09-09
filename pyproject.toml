@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ai-codebase-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "A retrieval-augmented AI agent for understanding React and TypeScript codebases"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,6 +13,7 @@ dependencies = [
   "openai>=1.50",
   "pydantic-settings>=2.5",
   "qdrant-client>=1.11",
+  "tree-sitter-language-pack>=0.9",
   "typer>=0.12",
   "uvicorn[standard]>=0.30",
 ]

@@ -46,7 +46,7 @@ class CodeStore:
         points = []
         for item, vector in zip(items, vectors, strict=True):
             digest = sha256(
-                f"{item.path}:{item.start_line}:{item.end_line}".encode()
+                f"{item.path}:{item.start_line}:{item.end_line}:{item.kind}".encode()
             ).digest()[:16]
             points.append(
                 models.PointStruct(
@@ -57,6 +57,8 @@ class CodeStore:
                         "start_line": item.start_line,
                         "end_line": item.end_line,
                         "content": item.content,
+                        "kind": item.kind,
+                        "symbol": item.symbol,
                     },
                 )
             )
