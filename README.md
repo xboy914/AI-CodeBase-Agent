@@ -7,28 +7,33 @@ A full-stack retrieval-augmented assistant that indexes React and TypeScript rep
 ![Next.js](https://img.shields.io/badge/Next.js-Web-000000?logo=nextdotjs&logoColor=white)
 ![Tree-sitter](https://img.shields.io/badge/Tree--sitter-AST-6A4C93)
 ![OpenAI](https://img.shields.io/badge/OpenAI-Embeddings%20%2B%20Responses-412991?logo=openai&logoColor=white)
-![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20Search-DC244C)
+![Qdrant](https://img.shields.io/badge/Qdrant-Incremental%20Vector%20Index-DC244C)
 ![CI](https://github.com/xboy914/AI-CodeBase-Agent/actions/workflows/ci.yml/badge.svg)
 
 ## What it demonstrates
 
 - AST-aware TypeScript, TSX, JavaScript, and JSX chunking with Tree-sitter
+- Content-hash incremental indexing that skips unchanged files
+- Vector replacement for modified files and cleanup for deleted files
 - Named symbol metadata for functions, classes, interfaces, types, enums, and components
-- Source filtering and safe root-path enforcement
-- OpenAI embeddings and Qdrant cosine-similarity retrieval
-- Grounded answers through the OpenAI Responses API
-- Explicit citations and uncertainty rules
+- OpenAI embeddings with Qdrant semantic retrieval
+- Grounded answers with explicit citations and uncertainty rules
 - FastAPI, CLI, and a responsive Next.js workspace
 - Independent backend and web quality gates in GitHub Actions
 
-## Retrieval pipeline
+## Incremental retrieval pipeline
 
 ```text
-Repository -> language parser -> syntax tree -> symbol chunks -> embeddings -> Qdrant
-Question -------------------------------------------------> retrieval ------> grounded answer
+Repository scan -> SHA-256 file hashes -> compare with Qdrant payloads
+                                         |
+                         changed --------+------ unchanged (skip)
+                            |
+                 AST chunks -> embeddings -> upsert
+                            |
+                 deleted paths -> vector cleanup
 ```
 
-Structured source files are grouped around meaningful declarations. Imports are retained as module context, oversized symbols are split with overlap, and unsupported text formats use line-window fallback chunking.
+Each stored chunk carries its source path, file hash, symbol, declaration kind, and line range. Re-indexing an unchanged repository creates no new embeddings. Changed files are deleted and replaced atomically by path; removed source files are also removed from retrieval.
 
 ## Quick start
 
@@ -55,7 +60,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` to index a permitted repository, ask a codebase question, and inspect the retrieved citations.
+Open `http://localhost:3000` to index a permitted repository, ask a codebase question, and inspect retrieved citations.
 
 ### CLI
 
@@ -64,12 +69,14 @@ codebase-agent index .
 codebase-agent ask "Where is authentication state managed?"
 ```
 
+The index command reports total files, embedded chunks, indexed files, unchanged files, and deleted files.
+
 ## API
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | GET | `/health` | API status and version |
-| POST | `/index` | Parse, chunk, embed, and store an allowed repository |
+| POST | `/index` | Incrementally parse, embed, replace, and clean repository vectors |
 | POST | `/ask` | Retrieve relevant code and answer with citations |
 
 Interactive API documentation is available at `http://localhost:8000/docs`.
@@ -83,10 +90,10 @@ Interactive API documentation is available at `http://localhost:8000/docs`.
 
 ## Roadmap
 
-- Incremental indexing based on content hashes and Git diffs
+- Batch-limited embeddings for very large repositories
 - Hybrid lexical and vector retrieval
 - Repository map and dependency graph
-- Pluggable model and embedding providers
+- Pluggable local and hosted model providers
 - Streaming answers and saved analysis sessions
 
 ## License

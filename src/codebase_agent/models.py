@@ -8,6 +8,9 @@ class IndexRequest(BaseModel):
 class IndexResult(BaseModel):
     files: int
     chunks: int
+    indexed_files: int = 0
+    unchanged_files: int = 0
+    deleted_files: int = 0
 
 
 class AskRequest(BaseModel):
