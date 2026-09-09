@@ -8,6 +8,7 @@ from qdrant_client import QdrantClient, models
 
 from .chunker import CodeChunk
 from .config import Settings
+from .retrieval import rank_lexical, reciprocal_rank_fusion
 
 
 @dataclass(frozen=True)
@@ -53,29 +54,33 @@ class CodeStore:
         )
         return [item.embedding for item in response.data]
 
-    def _stored_hashes(self) -> dict[str, str]:
+    def _scroll_payloads(self, fields: list[str] | bool = True) -> list[dict]:
         collection = self.settings.qdrant_collection
         if not self.client.collection_exists(collection):
-            return {}
+            return []
 
-        stored: dict[str, str] = {}
+        payloads: list[dict] = []
         offset = None
         while True:
             points, offset = self.client.scroll(
                 collection_name=collection,
                 limit=256,
                 offset=offset,
-                with_payload=["path", "file_hash"],
+                with_payload=fields,
                 with_vectors=False,
             )
-            for point in points:
-                payload = point.payload or {}
-                path = payload.get("path")
-                file_hash = payload.get("file_hash")
-                if isinstance(path, str) and isinstance(file_hash, str):
-                    stored[path] = file_hash
+            payloads.extend(point.payload or {} for point in points)
             if offset is None:
                 break
+        return payloads
+
+    def _stored_hashes(self) -> dict[str, str]:
+        stored: dict[str, str] = {}
+        for payload in self._scroll_payloads(["path", "file_hash"]):
+            path = payload.get("path")
+            file_hash = payload.get("file_hash")
+            if isinstance(path, str) and isinstance(file_hash, str):
+                stored[path] = file_hash
         return stored
 
     def _delete_paths(self, paths: Iterable[str]) -> None:
@@ -161,11 +166,18 @@ class CodeStore:
         )
 
     def search(self, query: str, limit: int) -> list[dict]:
+        candidate_limit = max(limit * 4, limit)
         vector = self._embed([query])[0]
         result = self.client.query_points(
             collection_name=self.settings.qdrant_collection,
             query=vector,
-            limit=limit,
+            limit=candidate_limit,
             with_payload=True,
         )
-        return [point.payload or {} for point in result.points]
+        vector_ranking = [point.payload or {} for point in result.points]
+        lexical_ranking = rank_lexical(
+            query,
+            self._scroll_payloads(),
+            candidate_limit,
+        )
+        return reciprocal_rank_fusion(vector_ranking, lexical_ranking, limit)
