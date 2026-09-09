@@ -14,6 +14,12 @@ def index(path: str = ".") -> None:
     typer.echo(result.model_dump_json(indent=2))
 
 
+@app.command("map")
+def map_repository(path: str = ".") -> None:
+    result = CodebaseAgent(get_settings()).repository_map(path)
+    typer.echo(json.dumps(result, indent=2))
+
+
 @app.command()
 def ask(question: str, limit: int = 8) -> None:
     result = CodebaseAgent(get_settings()).ask(question, limit)
