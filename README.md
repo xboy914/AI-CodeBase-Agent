@@ -6,7 +6,7 @@ A full-stack retrieval-augmented assistant that indexes React and TypeScript rep
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-Web-000000?logo=nextdotjs&logoColor=white)
 ![Tree-sitter](https://img.shields.io/badge/Tree--sitter-AST-6A4C93)
-![OpenAI](https://img.shields.io/badge/OpenAI-Embeddings%20%2B%20Responses-412991?logo=openai&logoColor=white)
+![Providers](https://img.shields.io/badge/AI-OpenAI%20%7C%20Ollama-412991)
 ![Qdrant](https://img.shields.io/badge/Qdrant-Hybrid%20Retrieval-DC244C)
 ![CI](https://github.com/xboy914/AI-CodeBase-Agent/actions/workflows/ci.yml/badge.svg)
 
@@ -17,7 +17,7 @@ A full-stack retrieval-augmented assistant that indexes React and TypeScript rep
 - Vector replacement for modified files and cleanup for deleted files
 - Hybrid semantic and lexical retrieval with Reciprocal Rank Fusion
 - Exact matching for file paths, symbols, declaration kinds, and code tokens
-- Grounded answers with explicit citations and uncertainty rules
+- Pluggable OpenAI-compatible providers for hosted OpenAI, local Ollama, and custom endpoints\n- Grounded answers with explicit citations and uncertainty rules
 - FastAPI, CLI, and a responsive Next.js workspace
 - Independent backend and web quality gates in GitHub Actions
 
@@ -47,7 +47,7 @@ cp .env.example .env
 uvicorn codebase_agent.api:app --reload
 ```
 
-Add your OpenAI API key to `.env` and set `CODEBASE_ROOT` to the parent directory containing repositories you are authorized to analyze.
+Set `CODEBASE_ROOT` to the parent directory containing repositories you are authorized to analyze. The default provider is OpenAI.\n\n### Run fully locally with Ollama\n\n```bash\nollama pull qwen2.5-coder:7b\nollama pull nomic-embed-text\n```\n\nThen configure `.env`:\n\n```env\nAI_PROVIDER=ollama\nEMBEDDING_MODEL=nomic-embed-text\nCHAT_MODEL=qwen2.5-coder:7b\n```\n\nOllama uses `http://localhost:11434/v1` by default. Set `PROVIDER_BASE_URL` and `PROVIDER_API_KEY` to connect to another OpenAI-compatible service such as vLLM.
 
 ### Web workspace
 
@@ -83,7 +83,7 @@ Interactive API documentation is available at `http://localhost:8000/docs`.
 
 - Indexing is restricted to `CODEBASE_ROOT`.
 - Common generated and dependency directories are ignored.
-- Retrieved code is sent to the configured model provider; do not index secrets or proprietary code without authorization.
+- Retrieved code is sent only to the configured provider. With Ollama, generation and embeddings remain on the local machine.\n- Do not index secrets or proprietary code without authorization.
 - The agent is read-only and never edits the target repository.
 
 ## Roadmap

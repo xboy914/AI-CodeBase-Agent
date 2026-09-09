@@ -1,11 +1,10 @@
 from hashlib import sha256
 from pathlib import Path
 
-from openai import OpenAI
-
 from .chunker import chunk_file, iter_source_files
 from .config import Settings
 from .models import AskResult, Citation, IndexResult
+from .providers import AIProvider, build_provider
 from .store import CodeStore
 
 SYSTEM_PROMPT = """You are a senior React and TypeScript codebase analyst.
@@ -15,10 +14,10 @@ When suggesting a change, separate observed behavior from your recommendation.""
 
 
 class CodebaseAgent:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, provider: AIProvider | None = None):
         self.settings = settings
-        self.store = CodeStore(settings)
-        self.openai = OpenAI(api_key=settings.openai_api_key)
+        self.provider = provider or build_provider(settings)
+        self.store = CodeStore(settings, self.provider)
 
     def _resolve_path(self, relative_path: str) -> Path:
         base = self.settings.codebase_root.resolve()
@@ -58,10 +57,9 @@ class CodebaseAgent:
             f"[{item['path']}:{item['start_line']}-{item['end_line']}]\n{item['content']}"
             for item in context
         ]
-        response = self.openai.responses.create(
-            model=self.settings.chat_model,
-            instructions=SYSTEM_PROMPT,
-            input=f"Question:\n{question}\n\nRepository context:\n" + "\n\n".join(blocks),
+        answer = self.provider.answer(
+            SYSTEM_PROMPT,
+            f"Question:\n{question}\n\nRepository context:\n" + "\n\n".join(blocks),
         )
         citations = [
             Citation(
@@ -71,4 +69,4 @@ class CodebaseAgent:
             )
             for item in context
         ]
-        return AskResult(answer=response.output_text, citations=citations)
+        return AskResult(answer=answer, citations=citations)

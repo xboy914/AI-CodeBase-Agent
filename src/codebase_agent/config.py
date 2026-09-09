@@ -1,11 +1,15 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    openai_api_key: str
+    ai_provider: Literal["openai", "ollama"] = "openai"
+    openai_api_key: str | None = None
+    provider_api_key: str | None = None
+    provider_base_url: str | None = None
     codebase_root: Path = Path(".")
     qdrant_url: str | None = None
     qdrant_api_key: str | None = None
