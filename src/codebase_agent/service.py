@@ -1,3 +1,4 @@
+from hashlib import sha256
 from pathlib import Path
 
 from openai import OpenAI
@@ -31,8 +32,22 @@ class CodebaseAgent:
     def index(self, relative_path: str = ".") -> IndexResult:
         target = self._resolve_path(relative_path)
         files = list(iter_source_files(target))
-        chunks = [chunk for file in files for chunk in chunk_file(file, target)]
-        return IndexResult(files=len(files), chunks=self.store.replace(chunks))
+        chunks_by_path = {
+            path.relative_to(target).as_posix(): list(chunk_file(path, target))
+            for path in files
+        }
+        file_hashes = {
+            path.relative_to(target).as_posix(): sha256(path.read_bytes()).hexdigest()
+            for path in files
+        }
+        result = self.store.sync(chunks_by_path, file_hashes)
+        return IndexResult(
+            files=len(files),
+            chunks=result.chunks,
+            indexed_files=result.indexed_files,
+            unchanged_files=result.unchanged_files,
+            deleted_files=result.deleted_files,
+        )
 
     def ask(self, question: str, limit: int = 8) -> AskResult:
         context = self.store.search(question, limit)

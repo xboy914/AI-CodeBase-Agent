@@ -9,6 +9,14 @@ export type AskResult = {
   citations: Citation[];
 };
 
+export type IndexResult = {
+  files: number;
+  chunks: number;
+  indexed_files: number;
+  unchanged_files: number;
+  deleted_files: number;
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -26,11 +34,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export function checkHealth() {
-  return request<{ status: string }>("/health");
+  return request<{ status: string; version: string }>("/health");
 }
 
 export function indexRepository(path: string) {
-  return request<{ files: number; chunks: number }>("/index", {
+  return request<IndexResult>("/index", {
     method: "POST",
     body: JSON.stringify({ path }),
   });
